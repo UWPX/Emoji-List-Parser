@@ -1,6 +1,10 @@
 # Emoji-List-Parser
 
-A parser for the emoji-test.txt provided by the [Unicode Consortium](http://unicode.org/consortium/consort.html).
+A parser for the `emoji-test.txt` file provided by the [Unicode Consortium](http://unicode.org/consortium/consort.html) written in [Python](https://www.python.org).
+
+## Requirements:
+* [Python](https://www.python.org/download/releases/3.0/) >= 3.0
+* [Requests](http://docs.python-requests.org/en/master/) (`pip3 install requests`)
 
 ## Example:
 

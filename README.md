@@ -10,6 +10,8 @@ A parser for the `emoji-test.txt` file provided by the [Unicode Consortium](http
 ## Example:
 
 ```python
+from emoji_parser import EmojiParser
+
 url = "https://unicode.org/Public/emoji/12.0/emoji-test.txt"
 parser = EmojiParser(url)
 result = parser.parse()

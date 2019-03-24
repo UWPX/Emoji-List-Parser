@@ -1,4 +1,5 @@
 import requests
+import re
 
 class Emoji:
     """
@@ -140,7 +141,19 @@ class EmojiParser:
         del parts[0]
 
         name = " ".join(parts)
-        searchTermsS = name.replace("-", " ").replace(" with", "").replace(" and", "").replace(" of", "").replace(" in", "").replace(":", "")
+        # Based on: https://github.com/neosmart/unicode.net/blob/3b0bd1867c96221b344084d8d82278f7c6a812b8/importers/emoji-importer.html#L13
+        searchTermsS = re.sub(r"[,.'’“”!():]", "", name)
+        searchTermsS = name.replace("-", " ") \
+            .replace("1st", "First") \
+            .replace("2st", "Second") \
+            .replace("3st", "Third") \
+        #    .replace("#", "Hash") \
+        #    .replace("*", "Asterisk")
+
         searchTerms = searchTermsS.split()
+
+        # Based on: https://github.com/neosmart/unicode.net/blob/3b0bd1867c96221b344084d8d82278f7c6a812b8/importers/emoji-importer.html#L45
+        unwanted =  ["of", "with", "without", "and", "or", "&", "-", "on", "the", "in"]
+        searchTerms = [l for l in searchTerms if not (l in unwanted)]
 
         return Emoji(codePoint, emoji, name, searchTerms, status, group, subgroup)

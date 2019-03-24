@@ -1,6 +1,32 @@
 import requests
 
 class Emoji:
+    """
+    A representation for an unicode emoji.
+
+    ...
+
+    Attributes
+    ----------
+    codePoint : str
+        list of one or more hex code points, separated by spaces e.g. "1F600" or "1F468 1F3FF 200D 2695 FE0F"
+    emoji : str
+        the actual emoji e.g. "😀" or "👨🏿‍⚕️"
+    name : str
+        the actual name of the emoji e.g. "grinning face" or "man health worker: dark skin tone"
+
+    searchTerms : list
+        a list of string search terms that describe the emoji e.g. ["grinning", "face"] or ["man", "health", "worker", "dark", "skin", "tone"]
+
+    status : str
+        the status of the emoji e.g. "component" or "fully-qualified"
+
+    group : str
+        the group the emoji is part of e.g. "Smileys & Emotion" or "People & Body"
+
+    subgroup : str
+        the subgroup the emoji is part of e.g. "face-smiling" or "person-role"
+    """
 
     def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, status: str, group: str, subgroup: str):
         self.codePoint = codePoint
@@ -12,11 +38,34 @@ class Emoji:
         self.subgroup = subgroup
 
 class EmojiParser:
+    """
+    A class used to represent an Animal
+
+    ...
+
+    Attributes
+    ----------
+    url : str
+        the url for where we should get the "emoji-test.txt" from
+
+    Methods
+    -------
+    parse(url: str)
+        downloads the emoji file specified in url and returns a list of Emoji objects or None if the download failed
+    """
 
     def __init__(self, url: str):
         self.url = url
 
-    def parse(self):
+    def parse(self) -> list:
+        """
+        Downloads the emoji file specified in url and returns a list of Emoji objects or None if the download failed.
+
+        Returns
+        -------
+        list
+            a list of Emoji objects if the download was successfull else None
+        """
         text = self.__downloadList()
         if text is None:
             return None
@@ -69,7 +118,7 @@ class EmojiParser:
 
         # Special case for the 'keycap' subgroup:
         endWithSeperator = s.strip().endswith('#')
-        
+
         parts = parts[1].split("#")
         parts = [l for l in parts if l and l.strip()]
         if len(parts) != 2:

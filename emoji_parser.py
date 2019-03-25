@@ -225,8 +225,8 @@ class EmojiParser:
         searchTermsS = re.sub(r"[,.'’“”!():]", "", name)
         searchTermsS = searchTermsS.replace("-", " ") \
             .replace("1st", "First") \
-            .replace("2st", "Second") \
-            .replace("3st", "Third") \
+            .replace("2nd", "Second") \
+            .replace("3rd", "Third") \
         #    .replace("#", "Hash") \
         #    .replace("*", "Asterisk")
 

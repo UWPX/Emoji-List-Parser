@@ -1,4 +1,4 @@
-from emoji_parser import Emoji, Status
+from emoji_parser import Emoji, Status, SkinTone
 import os
 
 class GenCSharp:
@@ -62,10 +62,34 @@ class GenCSharp:
         outFile.close()
 
     @classmethod
+    def genEmojiBasicFile(self, emoji: list):
+        if not os.path.exists("out"):
+            os.makedirs("out")
+        outFile = open("out/Emoji-Basic.cs", "w", encoding="utf-8")
+
+        output = ("using System.Collections.Generic;\n"
+            "\n"
+            "namespace NeoSmart.Unicode\n"
+            "{\n"
+            "\tpublic static partial class Emoji\n"
+            "\t{\n"
+            "\t\tpublic static IEnumerable<SingleEmoji> Basic => new[] {\n")
+
+        for e in emoji:
+            if (e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED) and SkinTone.NONE in e.skinTones:
+                output += "\t\t\t/* " + e.emoji + " */ " + self.genCamelCaseName(e) + ",\n"
+
+        output += "\t\t};\n\t}\n}\n"
+        outFile.write(output)
+        outFile.close()
+
+    @classmethod
     def gen(self, emoji: list):
         # Emoji-Emojis.cs
         self.genEmojiDeclarationsFile(emoji)
         # Emoji-All.cs
         self.genEmojiAllFile(emoji)
+        # Emoji-Basic.cs
+        self.genEmojiBasicFile(emoji)
 
         

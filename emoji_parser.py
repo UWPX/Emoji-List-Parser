@@ -1,5 +1,20 @@
+from enum import Enum
 import requests
 import re
+
+class SkinTone(Enum):
+    NONE = 0
+    LIGHT = 1
+    MEDIUM_LIGHT = 2
+    MEDIUM = 3
+    MEDIUM_DARK = 4
+    DARK = 5
+
+class Status(Enum):
+    COMPONENT = 0
+    FULLY_QUALIFIED = 1
+    MINIMALLY_QUALIFIED = 2
+    UNQUALIFIED = 3
 
 class Emoji:
     """
@@ -19,8 +34,11 @@ class Emoji:
     searchTerms : list
         a list of string search terms that describe the emoji e.g. ["grinning", "face"] or ["man", "health", "worker", "dark", "skin", "tone"]
 
-    status : str
-        the status of the emoji e.g. "component" or "fully-qualified"
+    skinTones : list
+        a list of SkinTone objects for the emoji e.g. [SkinTone.NONE] for "😀" , [SkinTone.DARK] for "👨🏿‍⚕️" and [SkinTone.DARK, SkinTone.MEDIUM] for "🧑🏿‍🤝‍🧑🏽"
+
+    status : Status
+        the status of the emoji e.g. Status.FULLY_QUALIFIED for "😀" and Status.COMPONENT for "🏻"
 
     group : str
         the group the emoji is part of e.g. "Smileys & Emotion" or "People & Body"
@@ -29,11 +47,12 @@ class Emoji:
         the subgroup the emoji is part of e.g. "face-smiling" or "person-role"
     """
 
-    def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, status: str, group: str, subgroup: str):
+    def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: str, subgroup: str):
         self.codePoint = codePoint
         self.emoji = emoji
         self.name = name
         self.searchTerms = searchTerms
+        self.skinTones = skinTones
         self.status = status
         self.group = group
         self.subgroup = subgroup
@@ -115,6 +134,7 @@ class EmojiParser:
             print("Invalid line for parsing emoji part 1:" + s)
             return None
 
+        # Code point:
         codePoint = parts[0].strip()
 
         # Special case for the 'keycap' subgroup:
@@ -128,7 +148,21 @@ class EmojiParser:
 
         if endWithSeperator:
             parts[1] = parts[1] + "#"
-        status = parts[0].strip()
+        
+        # Status:
+        statusS = parts[0].strip()
+        status = Status.COMPONENT
+
+        if statusS == "component":
+            status = Status.COMPONENT
+        elif statusS == "fully-qualified":
+            status = Status.FULLY_QUALIFIED
+        elif statusS == "minimally-qualified":
+            status = Status.MINIMALLY_QUALIFIED
+        elif statusS == "unqualified":
+            status = Status.UNQUALIFIED
+        else:
+            print("Unknown status found: " + statusS)
 
         parts = parts[1].strip().split()
 
@@ -136,11 +170,51 @@ class EmojiParser:
             print("Invalid line for parsing emoji part 3:" + s)
             return None
 
+        # Emoji:
         emoji = parts[0]
-
         del parts[0]
 
+        # Name:
         name = " ".join(parts)
+
+        # Skin tone:
+        skinTonesS = codePoint
+        skinTones = []
+        found = True
+
+        while found:
+            found = False
+            # 🏻 light skin tone:
+            if "1F3FB" in skinTonesS:
+                skinTonesS = skinTonesS.replace("1F3FB", "")
+                skinTones.append(SkinTone.LIGHT)
+                found = True
+            # 🏼 medium-light skin tone:
+            elif "1F3FC" in skinTonesS:
+                skinTonesS = skinTonesS.replace("1F3FC", "")
+                skinTones.append(SkinTone.MEDIUM_LIGHT)
+                found = True
+            # 🏽 medium skin tone:
+            elif "1F3FD" in skinTonesS:
+                skinTonesS = skinTonesS.replace("1F3FD", "")
+                skinTones.append(SkinTone.MEDIUM)
+                found = True
+            # 🏾 medium-dark skin tone:
+            elif "1F3FE" in skinTonesS:
+                skinTonesS = skinTonesS.replace("1F3FE", "")
+                skinTones.append(SkinTone.MEDIUM_DARK)
+                found = True
+            # 🏿 dark skin tone:
+            elif "1F3FF" in skinTonesS:
+                skinTonesS = skinTonesS.replace("1F3FF", "")
+                skinTones.append(SkinTone.DARK)
+                found = True
+
+        # Default to no skin color aka. yellow:
+        if len(skinTones) <= 0:
+            skinTones.append(SkinTone.NONE)
+
+        # Search terms:
         # Based on: https://github.com/neosmart/unicode.net/blob/3b0bd1867c96221b344084d8d82278f7c6a812b8/importers/emoji-importer.html#L13
         searchTermsS = re.sub(r"[,.'’“”!():]", "", name)
         searchTermsS = name.replace("-", " ") \
@@ -156,4 +230,4 @@ class EmojiParser:
         unwanted =  ["of", "with", "without", "and", "or", "&", "-", "on", "the", "in"]
         searchTerms = [l for l in searchTerms if not (l in unwanted)]
 
-        return Emoji(codePoint, emoji, name, searchTerms, status, group, subgroup)
+        return Emoji(codePoint, emoji, name, searchTerms, skinTones, status, group, subgroup)

@@ -5,13 +5,7 @@ class GenCSharp:
 
     @classmethod
     def genCamelCaseName(self, emoji: Emoji) -> str:
-        out = "".join([s.capitalize() for s in emoji.searchTerms if s.isalnum()])
-
-        if emoji.status == Status.MINIMALLY_QUALIFIED:
-            out += "MQ"
-        elif emoji.status == Status.UNQUALIFIED:
-            out += "UQ"
-        return out
+        return "".join([s.capitalize() for s in emoji.searchTerms if s.isalnum()])
 
     @classmethod
     def genSearchTerms(self, emoji: Emoji) -> str:

@@ -223,7 +223,7 @@ class EmojiParser:
         # Search terms:
         # Based on: https://github.com/neosmart/unicode.net/blob/3b0bd1867c96221b344084d8d82278f7c6a812b8/importers/emoji-importer.html#L13
         searchTermsS = re.sub(r"[,.'’“”!():]", "", name)
-        searchTermsS = name.replace("-", " ") \
+        searchTermsS = searchTermsS.replace("-", " ") \
             .replace("1st", "First") \
             .replace("2st", "Second") \
             .replace("3st", "Third") \

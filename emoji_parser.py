@@ -16,6 +16,18 @@ class Status(Enum):
     MINIMALLY_QUALIFIED = 2
     UNQUALIFIED = 3
 
+class Group(Enum):
+    SMILEYS_AND_EMOTION = 0
+    PEOPLE_AND_BODY = 1
+    COMPONENT = 2
+    ANIMALS_AND_NATURE = 3
+    FOOD_AND_DRINK = 4
+    TRAVEL_AND_PLACES = 5
+    ACTIVITIES = 6
+    OBJECTS = 7
+    SYMBOLS = 8
+    FLAGS = 9
+
 class Emoji:
     """
     A representation for an unicode emoji.
@@ -40,8 +52,8 @@ class Emoji:
     status : Status
         the status of the emoji e.g. Status.FULLY_QUALIFIED for "😀" and Status.COMPONENT for "🏻"
 
-    group : str
-        the group the emoji is part of e.g. "Smileys & Emotion" or "People & Body"
+    group : Group
+        the group the emoji is part of e.g. SMILEYS_AND_EMOTION for "Smileys & Emotion" and PEOPLE_AND_BODY for "People & Body"
 
     subgroup : str
         the subgroup the emoji is part of e.g. "face-smiling" or "person-role"
@@ -50,7 +62,7 @@ class Emoji:
         the index of the emoji in the emoji-test.txt list
     """
 
-    def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: str, subgroup: str, index: int):
+    def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: Group, subgroup: str, index: int):
         self.codePoint = codePoint
         self.emoji = emoji
         self.name = name
@@ -128,13 +140,34 @@ class EmojiParser:
         # Remove empty lines:
         return [l for l in result if l]
 
-    def __parseGroup(self, s: str) -> str:
-        return s.replace("# group: ", "").strip()
+    def __parseGroup(self, s: str) -> Group:
+        if "Smileys & Emotion" in s:
+            return Group.SMILEYS_AND_EMOTION
+        elif "People & Body" in s:
+            return Group.PEOPLE_AND_BODY
+        elif "Component" in s:
+            return Group.COMPONENT
+        elif "Animals & Nature" in s:
+            return Group.ANIMALS_AND_NATURE
+        elif "Food & Drink" in s:
+            return Group.FOOD_AND_DRINK
+        elif "Travel & Places" in s:
+            return Group.TRAVEL_AND_PLACES
+        elif "Activities" in s:
+            return Group.ACTIVITIES
+        elif "Objects" in s:
+            return Group.OBJECTS
+        elif "Symbols" in s:
+            return Group.SYMBOLS
+        elif "Flags" in s:
+            return Group.FLAGS
+        else:
+            raise Exception('Unknown emoji group found: {}'.format(s))
 
     def __parseSubgroup(self, s: str) -> str:
         return s.replace("# subgroup: ", "").strip()
 
-    def __parseEmoji(self, s: str, group: str, subgroup: str, index: int) -> Emoji:
+    def __parseEmoji(self, s: str, group: Group, subgroup: str, index: int) -> Emoji:
         parts = s.split(";")
         if len(parts) != 2:
             print("Invalid line for parsing emoji part 1:" + s)

@@ -1,10 +1,17 @@
-from emoji_parser import Emoji
+from emoji_parser import Emoji, Status
+import os
 
 class GenCSharp:
 
     @classmethod
     def genCamelCaseName(self, emoji: Emoji) -> str:
-        return "".join([s.capitalize() for s in emoji.searchTerms if s.isalnum()])
+        out = "".join([s.capitalize() for s in emoji.searchTerms if s.isalnum()])
+
+        if emoji.status == Status.MINIMALLY_QUALIFIED:
+            out += "MQ"
+        elif emoji.status == Status.UNQUALIFIED:
+            out += "UQ"
+        return out
 
     @classmethod
     def genSearchTerms(self, emoji: Emoji) -> str:
@@ -14,13 +21,17 @@ class GenCSharp:
     def genEmojiString(self, emoji: Emoji):
         return ("\t\tpublic static readonly SingleEmoji " + self.genCamelCaseName(emoji) + " = new SingleEmoji(\n"
             "\t\t\tsequence: new UnicodeSequence(\"" + emoji.codePoint + "\"),\n"
+            "\t\t\tname: \"" + emoji.name + "\",\n"
             "\t\t\tsearchTerms: new[] { " + self.genSearchTerms(emoji) + " },\n"
             "\t\t\tsortOrder: " + str(emoji.index) + "\n"
             "\t\t);\n")
 
     @classmethod
     def gen(self, emojis: list):
-        outFile = open("out.txt", "w")
+        if not os.path.exists("out"):
+            os.makedirs("out")
+
+        outFile = open("out/Emoji-Emojis.cs", "w", encoding="utf-8")
 
         output = ("namespace NeoSmart.Unicode\n"
             "{\n"
@@ -28,7 +39,8 @@ class GenCSharp:
             "\t{\n")
 
         for e in emojis:
-            output += self.genEmojiString(e)
+            if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED:
+                output += self.genEmojiString(e)
 
         output += "\t}\n}\n"
         outFile.write(output)

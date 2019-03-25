@@ -21,10 +21,9 @@ class GenCSharp:
             "\t\t);\n")
 
     @classmethod
-    def gen(self, emojis: list):
+    def genEmojiDeclarationsFile(self, emoji: list):
         if not os.path.exists("out"):
             os.makedirs("out")
-
         outFile = open("out/Emoji-Emojis.cs", "w", encoding="utf-8")
 
         output = ("namespace NeoSmart.Unicode\n"
@@ -32,11 +31,41 @@ class GenCSharp:
             "\tpublic static partial class Emoji\n"
             "\t{\n")
 
-        for e in emojis:
+        for e in emoji:
             if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED:
                 output += self.genEmojiString(e)
 
         output += "\t}\n}\n"
         outFile.write(output)
-
         outFile.close()
+
+    @classmethod
+    def genEmojiAllFile(self, emoji: list):
+        if not os.path.exists("out"):
+            os.makedirs("out")
+        outFile = open("out/Emoji-All.cs", "w", encoding="utf-8")
+
+        output = ("using System.Collections.Generic;\n"
+            "\n"
+            "namespace NeoSmart.Unicode\n"
+            "{\n"
+            "\tpublic static partial class Emoji\n"
+            "\t{\n"
+            "\t\tpublic static IEnumerable<SingleEmoji> All => new[] {\n")
+
+        for e in emoji:
+            if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED:
+                output += "\t\t\t/* " + e.emoji + " */ " + self.genCamelCaseName(e) + ",\n"
+
+        output += "\t\t};\n\t}\n}\n"
+        outFile.write(output)
+        outFile.close()
+
+    @classmethod
+    def gen(self, emoji: list):
+        # Emoji-Emojis.cs
+        self.genEmojiDeclarationsFile(emoji)
+        # Emoji-All.cs
+        self.genEmojiAllFile(emoji)
+
+        

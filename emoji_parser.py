@@ -45,9 +45,12 @@ class Emoji:
 
     subgroup : str
         the subgroup the emoji is part of e.g. "face-smiling" or "person-role"
+
+    index : int
+        the index of the emoji in the emoji-test.txt list
     """
 
-    def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: str, subgroup: str):
+    def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: str, subgroup: str, index: int):
         self.codePoint = codePoint
         self.emoji = emoji
         self.name = name
@@ -56,6 +59,7 @@ class Emoji:
         self.status = status
         self.group = group
         self.subgroup = subgroup
+        self.index = index
 
 class EmojiParser:
     """
@@ -96,15 +100,17 @@ class EmojiParser:
         emoji = []
         group = ""
         subgroup = ""
+        index = 0
         for l in lines:
             if l.startswith("# group:"):
                 group = self.__parseGroup(l)
             elif l.startswith("# subgroup:"):
                 subgroup = self.__parseSubgroup(l)
             elif not l.startswith("#"):
-                e = self.__parseEmoji(l, group, subgroup)
+                e = self.__parseEmoji(l, group, subgroup, index)
                 if e:
                     emoji.append(e)
+                    index += 1
 
         return emoji
 
@@ -128,7 +134,7 @@ class EmojiParser:
     def __parseSubgroup(self, s: str) -> str:
         return s.replace("# subgroup: ", "").strip()
 
-    def __parseEmoji(self, s: str, group: str, subgroup: str) -> Emoji:
+    def __parseEmoji(self, s: str, group: str, subgroup: str, index: int) -> Emoji:
         parts = s.split(";")
         if len(parts) != 2:
             print("Invalid line for parsing emoji part 1:" + s)
@@ -228,6 +234,6 @@ class EmojiParser:
 
         # Based on: https://github.com/neosmart/unicode.net/blob/3b0bd1867c96221b344084d8d82278f7c6a812b8/importers/emoji-importer.html#L45
         unwanted =  ["of", "with", "without", "and", "or", "&", "-", "on", "the", "in"]
-        searchTerms = [l for l in searchTerms if not (l in unwanted)]
+        searchTerms = [l.lower() for l in searchTerms if not (l in unwanted)]
 
-        return Emoji(codePoint, emoji, name, searchTerms, skinTones, status, group, subgroup)
+        return Emoji(codePoint, emoji, name, searchTerms, skinTones, status, group, subgroup, index)

@@ -6,4 +6,5 @@ if __name__ == "__main__":
     parser = EmojiParser(url)
     result = parser.parse()
 
-    GenCSharp.gen(result, url)
+    gen = GenCSharp(r"C:\Windows\Fonts\seguiemj.ttf", url)
+    gen.gen(result)

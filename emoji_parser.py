@@ -116,6 +116,10 @@ class EmojiParser:
         for l in lines:
             if l.startswith("# group:"):
                 group = self.__parseGroup(l)
+
+                # Add the Windows 10 ninja cat emoji:
+                if group == Group.ANIMALS_AND_NATURE:
+                    index = self.__addWindowsNinjaCatEmoji(emoji, index)
             elif l.startswith("# subgroup:"):
                 subgroup = self.__parseSubgroup(l)
             elif not l.startswith("#"):
@@ -125,6 +129,93 @@ class EmojiParser:
                     index += 1
 
         return emoji
+
+    def __addWindowsNinjaCatEmoji(self, emoji: list, index: int) -> int:
+        # 🐱‍👤 Ninja Cat:
+        emoji.append(Emoji(
+            "1F431 200D 1F464",
+            "🐱‍👤",
+            "ninja cat",
+            [ "ninja", "cat"],
+            [ SkinTone.NONE ],
+            Status.FULLY_QUALIFIED,
+            Group.ANIMALS_AND_NATURE,
+            "windows-ninja-cat",
+            index
+        ))
+        index += 1
+
+        # 🐱‍👓 Hipster Cat:
+        emoji.append(Emoji(
+            "1F431 200D 1F453",
+            "🐱‍👓",
+            "hipster cat",
+            [ "hipster", "cat"],
+            [ SkinTone.NONE ],
+            Status.FULLY_QUALIFIED,
+            Group.ANIMALS_AND_NATURE,
+            "windows-ninja-cat",
+            index
+        ))
+        index += 1
+
+        # 🐱‍💻 Hacker Cat:
+        emoji.append(Emoji(
+            "1F431 200D 1F4BB",
+            "🐱‍💻",
+            "hacker cat",
+            [ "hacker", "cat"],
+            [ SkinTone.NONE ],
+            Status.FULLY_QUALIFIED,
+            Group.ANIMALS_AND_NATURE,
+            "windows-ninja-cat",
+            index
+        ))
+        index += 1
+
+        # 🐱‍🐉 Dino Cat:
+        emoji.append(Emoji(
+            "1F431 200D 1F409",
+            "🐱‍🐉",
+            "dino cat",
+            [ "dino", "cat"],
+            [ SkinTone.NONE ],
+            Status.FULLY_QUALIFIED,
+            Group.ANIMALS_AND_NATURE,
+            "windows-ninja-cat",
+            index
+        ))
+        index += 1
+
+        # 🐱‍🏍 Stunt Cat:
+        emoji.append(Emoji(
+            "1F431 200D 1F3CD",
+            "🐱‍🏍",
+            "stunt cat",
+            [ "stunt", "cat"],
+            [ SkinTone.NONE ],
+            Status.FULLY_QUALIFIED,
+            Group.ANIMALS_AND_NATURE,
+            "windows-ninja-cat",
+            index
+        ))
+        index += 1
+
+        # 🐱‍🚀 Astro Cat:
+        emoji.append(Emoji(
+            "1F431 200D 1F680",
+            "🐱‍🚀",
+            "astro cat",
+            [ "astro", "cat"],
+            [ SkinTone.NONE ],
+            Status.FULLY_QUALIFIED,
+            Group.ANIMALS_AND_NATURE,
+            "windows-ninja-cat",
+            index
+        ))
+        index += 1
+
+        return index
 
     def __downloadList(self) -> str: 
         resp = requests.get(self.url)

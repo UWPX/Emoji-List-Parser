@@ -70,8 +70,8 @@ class GenCSharp:
             "\t\t/// <summary>\n"
             "\t\t/// A (sorted) enumeration of all emoji.\n"
             "\t\t/// Only contains fully-qualified and component emoji.\n"
-            "\t\t/// <summary>\n"
-            "\t\tpublic static IEnumerable<SingleEmoji> All => new[] {\n")
+            "\t\t/// <summary>\n")
+        output += self.__genSingleEmojiStart("All")
 
         for e in emoji:
             if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED:
@@ -100,8 +100,8 @@ class GenCSharp:
             "\t\t/// <summary>\n"
             "\t\t/// A (sorted) enumeration of all emoji in group: " + group.name + "\n"
             "\t\t/// Only contains fully-qualified and component emoji.\n"
-            "\t\t/// <summary>\n"
-            "\t\tpublic static IEnumerable<SingleEmoji> " + groupName + " => new[] {\n")
+            "\t\t/// <summary>\n")
+        output += self.__genSingleEmojiStart(groupName)
 
         for e in emoji:
             if (e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED) and e.group == group:
@@ -119,6 +119,13 @@ class GenCSharp:
                 if char_code == code:
                     return True
         return False
+    @classmethod
+    def __genSingleEmojiStart(self, name: str):
+        return ("#if NET20 || NET30 || NET35\n"
+            "\t\tpublic static readonly List<SingleEmoji> " + name + " = new List<SingleEmoji>() {\n"
+            "#else\n"
+            "\t\tpublic static SortedSet<SingleEmoji> " + name + " => new SortedSet<SingleEmoji>() {\n"
+            "#endif\n")
 
     @classmethod
     def genEmojiBasicFile(self, emoji: list, srcUrl: str):
@@ -137,8 +144,8 @@ class GenCSharp:
             "\t\t/// <summary>\n"
             "\t\t/// A (sorted) enumeration of all emoji without skin variations and no duplicate gendered vs gender-neutral emoji, ideal for displaying.\n"
             "\t\t/// Emoji without supported glyphs in Segoe UI Emoji are also omitted from this list.\n"
-            "\t\t/// <summary>\n"
-            "\t\tpublic static IEnumerable<SingleEmoji> Basic => new[] {\n")
+            "\t\t/// <summary>\n")
+        output += self.__genSingleEmojiStart("Basic")
 
         # The path to the Segoe UI Emoji font file under Windows 10:
         font = TTFont(r"C:\Windows\Fonts\seguiemj.ttf")

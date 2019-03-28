@@ -113,6 +113,7 @@ class EmojiParser:
         group = ""
         subgroup = ""
         index = 0
+        print("Started parsing emoji list...")
         for l in lines:
             if l.startswith("# group:"):
                 group = self.__parseGroup(l)
@@ -128,6 +129,7 @@ class EmojiParser:
                     emoji.append(e)
                     index += 1
 
+        print("Finished parsing emoji. Found " + str(len(emoji)) + " emoji.")
         return emoji
 
     def __addWindowsNinjaCatEmoji(self, emoji: list, index: int) -> int:
@@ -218,7 +220,9 @@ class EmojiParser:
         return index
 
     def __downloadList(self) -> str: 
+        print("Started emoji list download from: " + self.url)
         resp = requests.get(self.url)
+        print("Finished emoji list download.")
         return resp.text
 
     def __removeNotImpLines(self, lines: list) -> list:

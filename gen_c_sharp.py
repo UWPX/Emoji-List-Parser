@@ -1,4 +1,4 @@
-from emoji_parser import Emoji, Status, SkinTone, Group
+from emoji_parser import EmojiParseResult, Emoji, Status, SkinTone, Group
 from fontTools.ttLib import TTFont
 import os
 
@@ -39,6 +39,9 @@ class GenCSharp:
     def __genSkinToneString(self, skinTone: SkinTone) -> str:
         return "".join([s.lower().capitalize() for s in skinTone.name.split("_")])
 
+    def __genCodePoints(self, emoji: Emoji) -> str:
+        return ", ".join([hex(cp) for cp in emoji.codePoints])
+
     def __genGroup(self, emoji: Emoji) -> str:
         return "SkinTone." + ", SkinTone.".join([tone.name for tone in emoji.skinTones])
 
@@ -48,7 +51,7 @@ class GenCSharp:
 
     def genEmojiString(self, emoji: Emoji):
         return ("\t\tpublic static readonly SingleEmoji " + self.__genCamelCaseName(emoji) + " = new SingleEmoji(\n"
-            "\t\t\tsequence: new UnicodeSequence(\"" + emoji.codePoint + "\"),\n"
+            "\t\t\tsequence: new UnicodeSequence(new[] { " + self.__genCodePoints(emoji) + " }),\n"
             "\t\t\tname: \"" + emoji.name + "\",\n"
             "\t\t\tsearchTerms: new[] { " + self.__genSearchTerms(emoji) + " },\n"
             "\t\t\tskinTones: new[] { " + self.__genSkinTones(emoji) + " },\n"
@@ -58,7 +61,7 @@ class GenCSharp:
             "\t\t\tsortOrder: " + str(emoji.index) + "\n"
             "\t\t);\n")
 
-    def genEmojiDeclarationsFile(self, emoji: list):
+    def genEmojiDeclarationsFile(self, result: EmojiParseResult):
         if not os.path.exists("out"):
             os.makedirs("out")
         outFile = open("out/Emoji-Emojis.cs", "w", encoding="utf-8")
@@ -69,7 +72,7 @@ class GenCSharp:
             + "\tpublic static partial class Emoji\n"
             "\t{\n")
 
-        for e in emoji:
+        for e in result.emoji:
             if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED:
                 output += self.genEmojiString(e)
 
@@ -77,7 +80,7 @@ class GenCSharp:
         outFile.write(output)
         outFile.close()
 
-    def genEmojiAllFile(self, emoji: list):
+    def genEmojiAllFile(self, result: EmojiParseResult):
         if not os.path.exists("out"):
             os.makedirs("out")
         outFile = open("out/Emoji-All.cs", "w", encoding="utf-8")
@@ -95,7 +98,7 @@ class GenCSharp:
             "\t\t/// <summary>\n")
         output += self.__genSingleEmojiStart("All")
 
-        for e in emoji:
+        for e in result.emoji:
             if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED:
                 output += "\t\t\t/* " + e.emoji + " */ " + self.__genCamelCaseName(e) + ",\n"
 
@@ -103,7 +106,7 @@ class GenCSharp:
         outFile.write(output)
         outFile.close()
 
-    def genEmojiGroupFile(self, emoji: list, group: Group):
+    def genEmojiGroupFile(self, result: EmojiParseResult, group: Group):
         if not os.path.exists("out"):
             os.makedirs("out")
 
@@ -123,7 +126,7 @@ class GenCSharp:
             "\t\t/// <summary>\n")
         output += self.__genSingleEmojiStart(groupName)
 
-        for e in emoji:
+        for e in result.emoji:
             if (e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED) and e.group == group:
                 output += "\t\t\t/* " + e.emoji + " */ " + self.__genCamelCaseName(e) + ",\n"
 
@@ -146,7 +149,7 @@ class GenCSharp:
             "\t\tpublic static SortedSet<SingleEmoji> " + name + " => new SortedSet<SingleEmoji>() {\n"
             "#endif\n")
 
-    def genEmojiBasicFile(self, emoji: list):
+    def genEmojiBasicFile(self, result: EmojiParseResult):
         if not os.path.exists("out"):
             os.makedirs("out")
         outFile = open("out/Emoji-Basic.cs", "w", encoding="utf-8")
@@ -165,7 +168,7 @@ class GenCSharp:
         output += self.__genSingleEmojiStart("Basic")
 
         # The path to the Segoe UI Emoji font file under Windows 10:
-        for e in emoji:
+        for e in result.emoji:
             if (e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED) and SkinTone.NONE in e.skinTones and self.__isEmojiSupportedByFont(e):
                 output += "\t\t\t/* " + e.emoji + " */ " + self.__genCamelCaseName(e) + ",\n"
 
@@ -173,33 +176,33 @@ class GenCSharp:
         outFile.write(output)
         outFile.close()
 
-    def gen(self, emoji: list):
+    def gen(self, result: EmojiParseResult):
         # Emoji-Emojis.cs
-        self.genEmojiDeclarationsFile(emoji)
+        self.genEmojiDeclarationsFile(result)
         # Emoji-All.cs
-        self.genEmojiAllFile(emoji)
+        self.genEmojiAllFile(result)
         # Emoji-Basic.cs
-        self.genEmojiBasicFile(emoji)
+        self.genEmojiBasicFile(result)
 
         # Emoji-SmileysAndEmotion.cs
-        self.genEmojiGroupFile(emoji, Group.SMILEYS_AND_EMOTION)
+        self.genEmojiGroupFile(result, Group.SMILEYS_AND_EMOTION)
         # Emoji-PeopleAndBody.cs
-        self.genEmojiGroupFile(emoji, Group.PEOPLE_AND_BODY)
+        self.genEmojiGroupFile(result, Group.PEOPLE_AND_BODY)
         # Emoji-Component.cs
-        self.genEmojiGroupFile(emoji, Group.COMPONENT)
+        self.genEmojiGroupFile(result, Group.COMPONENT)
         # Emoji-AnimalsAndNature.cs
-        self.genEmojiGroupFile(emoji, Group.ANIMALS_AND_NATURE)
+        self.genEmojiGroupFile(result, Group.ANIMALS_AND_NATURE)
         # Emoji-FoodAndDrink.cs
-        self.genEmojiGroupFile(emoji, Group.FOOD_AND_DRINK)
+        self.genEmojiGroupFile(result, Group.FOOD_AND_DRINK)
         # Emoji-TravelAndPlaces.cs
-        self.genEmojiGroupFile(emoji, Group.TRAVEL_AND_PLACES)
+        self.genEmojiGroupFile(result, Group.TRAVEL_AND_PLACES)
         # Emoji-Activities.cs
-        self.genEmojiGroupFile(emoji, Group.ACTIVITIES)
+        self.genEmojiGroupFile(result, Group.ACTIVITIES)
         # Emoji-Objects.cs
-        self.genEmojiGroupFile(emoji, Group.OBJECTS)
+        self.genEmojiGroupFile(result, Group.OBJECTS)
         # Emoji-Symbols.cs
-        self.genEmojiGroupFile(emoji, Group.SYMBOLS)
+        self.genEmojiGroupFile(result, Group.SYMBOLS)
         # Emoji-Flags.cs
-        self.genEmojiGroupFile(emoji, Group.FLAGS)
+        self.genEmojiGroupFile(result, Group.FLAGS)
 
         

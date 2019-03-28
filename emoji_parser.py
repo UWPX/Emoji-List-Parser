@@ -1,4 +1,6 @@
 from enum import Enum
+from datetime import datetime
+import time
 import requests
 import re
 
@@ -28,6 +30,33 @@ class Group(Enum):
     SYMBOLS = 8
     FLAGS = 9
 
+class EmojiParseResult:
+    """
+    Holds the parse result on success.
+
+    ...
+
+    Attributes
+    ----------
+    emoji : list
+        the list of found Emoji objects
+
+    versionMajor : int
+        the major version number of the parsed file e.g. for "12.0" it would be 12
+
+    versionMinor : int
+        the minor version number of the parsed file e.g. for "12.0" it would be 0
+
+    dateSource : datetime
+        the date and time object of the "emoji-test.txt" file creation
+    """
+
+    def __init__(self, emoji: list, versionMajor: int, versionMinor: int, dateSource: datetime):
+        self.emoji = emoji
+        self.versionMajor = versionMajor
+        self.versionMinor = versionMinor
+        self.dateSource = dateSource
+
 class Emoji:
     """
     A representation for an unicode emoji.
@@ -36,10 +65,12 @@ class Emoji:
 
     Attributes
     ----------
-    codePoint : str
-        list of one or more hex code points, separated by spaces e.g. "1F600" or "1F468 1F3FF 200D 2695 FE0F"
+    codePoints : str
+        a list of one or more code points representing the emoji e.g. [ 0x1F600 ] or [ 0x1F468, 0x1F3FF, 0x200D, 0x2695, 0xFE0F ]
+    
     emoji : str
         the actual emoji e.g. "😀" or "👨🏿‍⚕️"
+
     name : str
         the actual name of the emoji e.g. "grinning face" or "man health worker: dark skin tone"
 
@@ -62,8 +93,8 @@ class Emoji:
         the index of the emoji in the emoji-test.txt list
     """
 
-    def __init__(self, codePoint: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: Group, subgroup: str, index: int):
-        self.codePoint = codePoint
+    def __init__(self, codePoints: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: Group, subgroup: str, index: int):
+        self.codePoints = codePoints
         self.emoji = emoji
         self.name = name
         self.searchTerms = searchTerms
@@ -87,7 +118,7 @@ class EmojiParser:
     Methods
     -------
     parse(url: str)
-        downloads the emoji file specified in url and returns a list of Emoji objects or None if the download failed
+        downloads the emoji file specified in url and returns a EmojiParseResult object or None if the download failed
     """
 
     def __init__(self, url: str):
@@ -95,7 +126,7 @@ class EmojiParser:
 
     def parse(self) -> list:
         """
-        Downloads the emoji file specified in url and returns a list of Emoji objects or None if the download failed.
+        Downloads the emoji file specified in url and returns a EmojiParseResult object or None if the download failed.
 
         Returns
         -------
@@ -113,6 +144,9 @@ class EmojiParser:
         group = ""
         subgroup = ""
         index = 0
+        versionMajor = -1
+        versionMinor = -1
+        dateSource = time.gmtime(0)
         print("Started parsing emoji list...")
         for l in lines:
             if l.startswith("# group:"):
@@ -123,19 +157,29 @@ class EmojiParser:
                     index = self.__addWindowsNinjaCatEmoji(emoji, index)
             elif l.startswith("# subgroup:"):
                 subgroup = self.__parseSubgroup(l)
-            elif not l.startswith("#"):
+            elif l.startswith("#"):
+                versionMatch = re.search(r"\# Version: (\d+)\.(\d+).*", l)
+                if versionMatch:
+                    versionMajor = int(versionMatch.group(1))
+                    versionMinor = int(versionMatch.group(2))
+                else:
+                    dateMatch = re.match(r"\# Date: \d\d\d\d-\d\d-\d\d, \d\d:\d\d:\d\d GMT", l)
+                    if dateMatch:
+                        l = l.replace("# Date: ", "").replace(" GMT", "").strip()
+                        dateSource = datetime.strptime(l, "%Y-%m-%d, %H:%M:%S")
+            else:
                 e = self.__parseEmoji(l, group, subgroup, index)
                 if e:
                     emoji.append(e)
                     index += 1
 
         print("Finished parsing emoji. Found " + str(len(emoji)) + " emoji.")
-        return emoji
+        return EmojiParseResult(emoji, versionMajor, versionMinor, dateSource)
 
     def __addWindowsNinjaCatEmoji(self, emoji: list, index: int) -> int:
         # 🐱‍👤 Ninja Cat:
         emoji.append(Emoji(
-            "1F431 200D 1F464",
+            [ 0x1F431, 0x200D, 0x1F464],
             "🐱‍👤",
             "ninja cat",
             [ "ninja", "cat"],
@@ -149,7 +193,7 @@ class EmojiParser:
 
         # 🐱‍👓 Hipster Cat:
         emoji.append(Emoji(
-            "1F431 200D 1F453",
+            [ 0x1F431, 0x200D, 0x1F453],
             "🐱‍👓",
             "hipster cat",
             [ "hipster", "cat"],
@@ -163,7 +207,7 @@ class EmojiParser:
 
         # 🐱‍💻 Hacker Cat:
         emoji.append(Emoji(
-            "1F431 200D 1F4BB",
+            [ 0x1F431, 0x200D, 0x1F4BB],
             "🐱‍💻",
             "hacker cat",
             [ "hacker", "cat"],
@@ -177,7 +221,7 @@ class EmojiParser:
 
         # 🐱‍🐉 Dino Cat:
         emoji.append(Emoji(
-            "1F431 200D 1F409",
+            [ 0x1F431, 0x200D, 0x1F409],
             "🐱‍🐉",
             "dino cat",
             [ "dino", "cat"],
@@ -191,7 +235,7 @@ class EmojiParser:
 
         # 🐱‍🏍 Stunt Cat:
         emoji.append(Emoji(
-            "1F431 200D 1F3CD",
+            [ 0x1F431, 0x200D, 0x1F3CD],
             "🐱‍🏍",
             "stunt cat",
             [ "stunt", "cat"],
@@ -205,7 +249,7 @@ class EmojiParser:
 
         # 🐱‍🚀 Astro Cat:
         emoji.append(Emoji(
-            "1F431 200D 1F680",
+            [ 0x1F431, 0x200D, 0x1F680],
             "🐱‍🚀",
             "astro cat",
             [ "astro", "cat"],
@@ -229,7 +273,7 @@ class EmojiParser:
         # Remove start comment:
         result = []
         for l in lines:
-            if not l.startswith("#") or l.startswith("# group:") or l.startswith("# subgroup:"):
+            if not l.startswith("#") or l.startswith("# group:") or l.startswith("# subgroup:") or l.startswith("# Date:") or l.startswith("# Version:"):
                 result.append(l)
 
         # Remove empty lines:
@@ -262,6 +306,12 @@ class EmojiParser:
     def __parseSubgroup(self, s: str) -> str:
         return s.replace("# subgroup: ", "").strip()
 
+    def __parseCodePoints(self, s: str) -> list:
+        result = []
+        for cp in s.strip().split():
+            result.append(int(cp, 16))
+        return result
+
     def __parseEmoji(self, s: str, group: Group, subgroup: str, index: int) -> Emoji:
         parts = s.split(";")
         if len(parts) != 2:
@@ -269,7 +319,11 @@ class EmojiParser:
             return None
 
         # Code point:
-        codePoint = parts[0].strip()
+        codePoints = self.__parseCodePoints(parts[0])
+
+        if len(codePoints) <= 0:
+            print("Invalid line for parsing emoji code point:" + s)
+            return None
 
         # Special case for the 'keycap' subgroup:
         endWithSeperator = s.strip().endswith('#')
@@ -312,37 +366,25 @@ class EmojiParser:
         name = " ".join(parts)
 
         # Skin tone:
-        skinTonesS = codePoint
         skinTones = []
         found = True
 
-        while found:
-            found = False
+        for cp in codePoints:
             # 🏻 light skin tone:
-            if "1F3FB" in skinTonesS:
-                skinTonesS = skinTonesS.replace("1F3FB", "")
+            if cp == 0x1F3FB:
                 skinTones.append(SkinTone.LIGHT)
-                found = True
             # 🏼 medium-light skin tone:
-            elif "1F3FC" in skinTonesS:
-                skinTonesS = skinTonesS.replace("1F3FC", "")
+            elif cp == 0x1F3FC:
                 skinTones.append(SkinTone.MEDIUM_LIGHT)
-                found = True
             # 🏽 medium skin tone:
-            elif "1F3FD" in skinTonesS:
-                skinTonesS = skinTonesS.replace("1F3FD", "")
+            elif cp == 0x1F3FD:
                 skinTones.append(SkinTone.MEDIUM)
-                found = True
             # 🏾 medium-dark skin tone:
-            elif "1F3FE" in skinTonesS:
-                skinTonesS = skinTonesS.replace("1F3FE", "")
+            elif cp == 0x1F3FE:
                 skinTones.append(SkinTone.MEDIUM_DARK)
-                found = True
             # 🏿 dark skin tone:
-            elif "1F3FF" in skinTonesS:
-                skinTonesS = skinTonesS.replace("1F3FF", "")
+            elif cp == 0x1F3FF:
                 skinTones.append(SkinTone.DARK)
-                found = True
 
         # Default to no skin color aka. yellow:
         if len(skinTones) <= 0:
@@ -364,4 +406,4 @@ class EmojiParser:
         unwanted =  ["of", "with", "without", "and", "or", "&", "-", "on", "the", "in"]
         searchTerms = [l.lower() for l in searchTerms if not (l in unwanted)]
 
-        return Emoji(codePoint, emoji, name, searchTerms, skinTones, status, group, subgroup, index)
+        return Emoji(codePoints, emoji, name, searchTerms, skinTones, status, group, subgroup, index)

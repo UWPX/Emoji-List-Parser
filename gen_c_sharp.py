@@ -32,7 +32,7 @@ class GenCSharp:
 
     def __genSkinTones(self, emoji: Emoji) -> str:
         if len(emoji.skinTones) > 1 or len(emoji.skinTones) == 1 and emoji.skinTones[0] != SkinTone.NONE:
-            return "Emoji.SkinTones." + ", Emoji.SkinTones.".join([self.__genSkinToneString(tone) for tone in emoji.skinTones if tone != SkinTone.NONE])
+            return "SkinTones." + ", SkinTones.".join([self.__genSkinToneString(tone) for tone in emoji.skinTones if tone != SkinTone.NONE])
         else:
             return ""
     
@@ -50,11 +50,12 @@ class GenCSharp:
             "\t// See https://github.com/UWPX/Emoji-List-Parser for the generator.\n")
 
     def genEmojiString(self, emoji: Emoji):
-        return ("\t\tpublic static readonly SingleEmoji " + self.__genCamelCaseName(emoji) + " = new SingleEmoji(\n"
-            "\t\t\tsequence: new UnicodeSequence(new[] { " + self.__genCodePoints(emoji) + " }),\n"
+        return ("\t\t/* " + emoji.emoji + " */\n"
+            "\t\tpublic static readonly SingleEmoji " + self.__genCamelCaseName(emoji) + " = new SingleEmoji(\n"
+            "\t\t\tsequence: new UnicodeSequence(new int[] { " + self.__genCodePoints(emoji) + " }),\n"
             "\t\t\tname: \"" + emoji.name + "\",\n"
-            "\t\t\tsearchTerms: new[] { " + self.__genSearchTerms(emoji) + " },\n"
-            "\t\t\tskinTones: new[] { " + self.__genSkinTones(emoji) + " },\n"
+            "\t\t\tsearchTerms: new string[] { " + self.__genSearchTerms(emoji) + " },\n"
+            "\t\t\tskinTones: new Codepoint[] { " + self.__genSkinTones(emoji) + " },\n"
             "\t\t\tgroup: Group." + emoji.group.name + ",\n"
             "\t\t\tsubgroup: \"" + emoji.subgroup + "\",\n"
             "\t\t\thasGlyph: " + str(self.__isEmojiSupportedByFont(emoji)).lower() + ",\n"
@@ -73,9 +74,7 @@ class GenCSharp:
             + "\tpublic static partial class Emoji\n"
             "\t{\n")
 
-        for e in result.emoji:
-            if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED:
-                output += self.genEmojiString(e)
+        output += "\n".join([self.genEmojiString(e) for e in result.emoji if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED])
 
         output += "\t}\n}\n"
         outFile.write(output)

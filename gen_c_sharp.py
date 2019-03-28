@@ -1,6 +1,7 @@
 from emoji_parser import EmojiParseResult, Emoji, Status, SkinTone, Group
 from fontTools.ttLib import TTFont
 import os
+import re
 
 class GenCSharp:
 
@@ -57,16 +58,14 @@ class GenCSharp:
             "\t\t\tsearchTerms: new string[] { " + self.__genSearchTerms(emoji) + " },\n"
             "\t\t\tskinTones: new Codepoint[] { " + self.__genSkinTones(emoji) + " },\n"
             "\t\t\tgroup: Group." + emoji.group.name + ",\n"
-            "\t\t\tsubgroup: \"" + emoji.subgroup + "\",\n"
+            "\t\t\tsubgroup: Subgroups." + self.__genSubGroupName(emoji.subgroup) + ",\n"
             "\t\t\thasGlyph: " + str(self.__isEmojiSupportedByFont(emoji)).lower() + ",\n"
             "\t\t\tsortOrder: " + str(emoji.index) + "\n"
             "\t\t);\n")
 
     def genEmojiDeclarationsFile(self, result: EmojiParseResult):
         print("Generating \"Emoji-Emojis.cs\"...")
-        if not os.path.exists("out"):
-            os.makedirs("out")
-        outFile = open("out/Emoji-Emojis.cs", "w", encoding="utf-8")
+        outFile = self.__openFile("Emoji-Emojis.cs")
 
         output = ("namespace NeoSmart.Unicode\n"
             "{\n"
@@ -77,15 +76,12 @@ class GenCSharp:
         output += "\n".join([self.genEmojiString(e) for e in result.emoji if e.status == Status.COMPONENT or e.status == Status.FULLY_QUALIFIED])
 
         output += "\t}\n}\n"
-        outFile.write(output)
-        outFile.close()
-        print("Finished generating \"Emoji-Emojis.cs\"...")
+        self.__writeAndCloseFile(outFile, output)
+        print("Finished generating \"Emoji-Emojis.cs\".")
 
     def genEmojiAllFile(self, result: EmojiParseResult):
         print("Generating \"Emoji-All.cs\"...")
-        if not os.path.exists("out"):
-            os.makedirs("out")
-        outFile = open("out/Emoji-All.cs", "w", encoding="utf-8")
+        outFile = self.__openFile("Emoji-All.cs")
 
         output = ("using System.Collections.Generic;\n"
             "\n"
@@ -105,17 +101,13 @@ class GenCSharp:
                 output += "\t\t\t/* " + e.emoji + " */ " + self.__genCamelCaseName(e) + ",\n"
 
         output += "\t\t};\n\t}\n}\n"
-        outFile.write(output)
-        outFile.close()
-        print("Finished generating \"Emoji-All.cs\"...")
+        self.__writeAndCloseFile(outFile, output)
+        print("Finished generating \"Emoji-All.cs\".")
 
     def genEmojiGroupFile(self, result: EmojiParseResult, group: Group):
-        if not os.path.exists("out"):
-            os.makedirs("out")
-
         groupName = "".join([s.lower().capitalize() for s in group.name.split("_")])
         print("Generating \"Emoji-" + groupName + ".cs\"...")
-        outFile = open("out/Emoji-" + groupName + ".cs", "w", encoding="utf-8")
+        outFile = self.__openFile("Emoji-" + groupName + ".cs")
 
         output = ("using System.Collections.Generic;\n"
             "\n"
@@ -135,9 +127,8 @@ class GenCSharp:
                 output += "\t\t\t/* " + e.emoji + " */ " + self.__genCamelCaseName(e) + ",\n"
 
         output += "\t\t};\n\t}\n}\n"
-        outFile.write(output)
-        outFile.close()
-        print("Finished generating \"Emoji-" + groupName + ".cs\"...")
+        self.__writeAndCloseFile(outFile, output)
+        print("Finished generating \"Emoji-" + groupName + ".cs\".")
 
     def __isEmojiSupportedByFont(self, emoji: Emoji) -> bool:
         code = sum([ord(i) for i in emoji.emoji])
@@ -155,10 +146,7 @@ class GenCSharp:
             "#endif\n")
 
     def genEmojiBasicFile(self, result: EmojiParseResult):
-        print("Generating \"Emoji-Basic.cs\"...")
-        if not os.path.exists("out"):
-            os.makedirs("out")
-        outFile = open("out/Emoji-Basic.cs", "w", encoding="utf-8")
+        outFile = self.__openFile("Emoji-Basic.cs")
 
         output = ("using System.Collections.Generic;\n"
             "\n"
@@ -179,13 +167,45 @@ class GenCSharp:
                 output += "\t\t\t/* " + e.emoji + " */ " + self.__genCamelCaseName(e) + ",\n"
 
         output += "\t\t};\n\t}\n}\n"
-        outFile.write(output)
-        outFile.close()
-        print("Finished generating \"Emoji-Basic.cs\"...")
+        self.__writeAndCloseFile(outFile, output)
+        print("Finished generating \"Emoji-Basic.cs\".")
+
+    def __genSubGroupName(self, subgroup: str) -> str:
+        parts = re.sub(r"[,.'’“”!():\-&]", " ", subgroup).split()
+        return "_".join(part.upper() for part in parts if part)
+
+    def __openFile(self, name: str):
+        if not os.path.exists("out"):
+            os.makedirs("out")
+        return open("out/" + name, "w", encoding="utf-8")
+
+    def __writeAndCloseFile(self, file, text: str):
+        # Replace \t with 4 spaces to match the VS identation:
+        file.write(text.replace("\t", "    "))
+        file.close()
+
+    def genSubgroupsFile(self, result: EmojiParseResult):
+        print("Generating \"Emoji-Subgroups.cs\"...")
+        outFile = self.__openFile("Emoji-Subgroups.cs")
+
+        output = ("namespace NeoSmart.Unicode\n"
+            "{\n"
+            + self.__genMachinegeneratedHeader()
+            + "\tpublic static partial class Emoji\n"
+            "\t{\n"
+            "\t\tpublic static class Subgroups\n"
+            "\t\t{\n")
+        output += "\n".join("\t\t\tpublic static readonly string " + self.__genSubGroupName(subgroup) + " = \"" + subgroup + "\";" for subgroup in result.subgroups) + "\n"
+        output += "\t\t}\n\t}\n}\n"
+
+        self.__writeAndCloseFile(outFile, output)
+        print("Finished generating \"Subgroups.cs\".")
 
     def gen(self, result: EmojiParseResult):
         # Emoji-Emojis.cs
         self.genEmojiDeclarationsFile(result)
+        # Subgroups.cs
+        self.genSubgroupsFile(result)
         # Emoji-All.cs
         self.genEmojiAllFile(result)
         # Emoji-Basic.cs

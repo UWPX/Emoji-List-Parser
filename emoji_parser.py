@@ -41,6 +41,9 @@ class EmojiParseResult:
     emoji : list
         the list of found Emoji objects
 
+    subgroups : list
+        a list of all emoji subgroups found
+
     versionMajor : int
         the major version number of the parsed file e.g. for "12.0" it would be 12
 
@@ -51,8 +54,9 @@ class EmojiParseResult:
         the date and time object of the "emoji-test.txt" file creation
     """
 
-    def __init__(self, emoji: list, versionMajor: int, versionMinor: int, dateSource: datetime):
+    def __init__(self, emoji: list, subgroups: list, versionMajor: int, versionMinor: int, dateSource: datetime):
         self.emoji = emoji
+        self.subgroups = subgroups
         self.versionMajor = versionMajor
         self.versionMinor = versionMinor
         self.dateSource = dateSource
@@ -141,6 +145,7 @@ class EmojiParser:
         lines = self.__removeNotImpLines(lines)
 
         emoji = []
+        subgroups = []
         group = ""
         subgroup = ""
         index = 0
@@ -154,9 +159,11 @@ class EmojiParser:
 
                 # Add the Windows 10 ninja cat emoji:
                 if group == Group.ANIMALS_AND_NATURE:
-                    index = self.__addWindowsNinjaCatEmoji(emoji, index)
+                    index = self.__addWindowsNinjaCatEmoji(emoji, subgroups, index)
             elif l.startswith("# subgroup:"):
                 subgroup = self.__parseSubgroup(l)
+                if not subgroup in subgroups:
+                    subgroups.append(subgroup)
             elif l.startswith("#"):
                 versionMatch = re.search(r"\# Version: (\d+)\.(\d+).*", l)
                 if versionMatch:
@@ -173,10 +180,12 @@ class EmojiParser:
                     emoji.append(e)
                     index += 1
 
-        print("Finished parsing emoji. Found " + str(len(emoji)) + " emoji.")
-        return EmojiParseResult(emoji, versionMajor, versionMinor, dateSource)
+        print("Finished parsing emoji. Found " + str(len(emoji)) + " emoji in " + str(len(subgroups)) + " subgroups.")
+        return EmojiParseResult(emoji, subgroups, versionMajor, versionMinor, dateSource)
 
-    def __addWindowsNinjaCatEmoji(self, emoji: list, index: int) -> int:
+    def __addWindowsNinjaCatEmoji(self, emoji: list, subgroups: list, index: int) -> int:
+        subgroups.append("windows-ninja-cat")
+
         # 🐱‍👤 Ninja Cat:
         emoji.append(Emoji(
             [ 0x1F431, 0x200D, 0x1F464],
@@ -367,7 +376,6 @@ class EmojiParser:
 
         # Skin tone:
         skinTones = []
-        found = True
 
         for cp in codePoints:
             # 🏻 light skin tone:

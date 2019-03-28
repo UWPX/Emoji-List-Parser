@@ -62,6 +62,7 @@ class GenCSharp:
             "\t\t);\n")
 
     def genEmojiDeclarationsFile(self, result: EmojiParseResult):
+        print("Generating \"Emoji-Emojis.cs\"...")
         if not os.path.exists("out"):
             os.makedirs("out")
         outFile = open("out/Emoji-Emojis.cs", "w", encoding="utf-8")
@@ -79,8 +80,10 @@ class GenCSharp:
         output += "\t}\n}\n"
         outFile.write(output)
         outFile.close()
+        print("Finished generating \"Emoji-Emojis.cs\"...")
 
     def genEmojiAllFile(self, result: EmojiParseResult):
+        print("Generating \"Emoji-All.cs\"...")
         if not os.path.exists("out"):
             os.makedirs("out")
         outFile = open("out/Emoji-All.cs", "w", encoding="utf-8")
@@ -105,12 +108,14 @@ class GenCSharp:
         output += "\t\t};\n\t}\n}\n"
         outFile.write(output)
         outFile.close()
+        print("Finished generating \"Emoji-All.cs\"...")
 
     def genEmojiGroupFile(self, result: EmojiParseResult, group: Group):
         if not os.path.exists("out"):
             os.makedirs("out")
 
         groupName = "".join([s.lower().capitalize() for s in group.name.split("_")])
+        print("Generating \"Emoji-" + groupName + ".cs\"...")
         outFile = open("out/Emoji-" + groupName + ".cs", "w", encoding="utf-8")
 
         output = ("using System.Collections.Generic;\n"
@@ -133,6 +138,7 @@ class GenCSharp:
         output += "\t\t};\n\t}\n}\n"
         outFile.write(output)
         outFile.close()
+        print("Finished generating \"Emoji-" + groupName + ".cs\"...")
 
     def __isEmojiSupportedByFont(self, emoji: Emoji) -> bool:
         code = sum([ord(i) for i in emoji.emoji])
@@ -150,6 +156,7 @@ class GenCSharp:
             "#endif\n")
 
     def genEmojiBasicFile(self, result: EmojiParseResult):
+        print("Generating \"Emoji-Basic.cs\"...")
         if not os.path.exists("out"):
             os.makedirs("out")
         outFile = open("out/Emoji-Basic.cs", "w", encoding="utf-8")
@@ -175,6 +182,7 @@ class GenCSharp:
         output += "\t\t};\n\t}\n}\n"
         outFile.write(output)
         outFile.close()
+        print("Finished generating \"Emoji-Basic.cs\"...")
 
     def gen(self, result: EmojiParseResult):
         # Emoji-Emojis.cs
@@ -204,5 +212,7 @@ class GenCSharp:
         self.genEmojiGroupFile(result, Group.SYMBOLS)
         # Emoji-Flags.cs
         self.genEmojiGroupFile(result, Group.FLAGS)
+
+        print("Done generating all C# source code files!")
 
         

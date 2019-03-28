@@ -4,6 +4,22 @@ import os
 
 class GenCSharp:
 
+    def printFont(self):
+        for f in self.font.keys():
+            for table in f:
+                print(table)
+                if isinstance(table, str):
+                    continue
+                for char_code, glyph_name in table.cmap.items():
+                    print(hex(char_code) + " " + glyph_name)
+        """
+        print("------------")
+        print(hex(ord("😉")))
+        print(hex(ord("💖")))
+        print(hex(ord("👨🏿‍🦰")))
+        print(hex(ord("🐱‍👤")))
+        """
+
     def __init__(self, fontPath: str, srcUrl: str):
         self.font = TTFont(fontPath)
         self.srcUrl = srcUrl
@@ -15,7 +31,13 @@ class GenCSharp:
         return "\"" + "\", \"".join(emoji.searchTerms) + "\""
 
     def __genSkinTones(self, emoji: Emoji) -> str:
-        return "SkinTone." + ", SkinTone.".join([tone.name for tone in emoji.skinTones])
+        if len(emoji.skinTones) > 1 or len(emoji.skinTones) == 1 and emoji.skinTones[0] != SkinTone.NONE:
+            return "Emoji.SkinTones." + ", Emoji.SkinTones.".join([self.__genSkinToneString(tone) for tone in emoji.skinTones if tone != SkinTone.NONE])
+        else:
+            return ""
+    
+    def __genSkinToneString(self, skinTone: SkinTone) -> str:
+        return "".join([s.lower().capitalize() for s in skinTone.name.split("_")])
 
     def __genGroup(self, emoji: Emoji) -> str:
         return "SkinTone." + ", SkinTone.".join([tone.name for tone in emoji.skinTones])
@@ -109,7 +131,7 @@ class GenCSharp:
         outFile.write(output)
         outFile.close()
 
-    def __isEmojiSupportedByFont(self, emoji: Emoji):
+    def __isEmojiSupportedByFont(self, emoji: Emoji) -> bool:
         code = sum([ord(i) for i in emoji.emoji])
         for table in self.font['cmap'].tables:
             for char_code, glyph_name in table.cmap.items():

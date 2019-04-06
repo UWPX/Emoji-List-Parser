@@ -134,23 +134,47 @@ class GenCSharp:
         # Shape text:
         features = {"kern": True, "liga": True}
         shape(font, buf, features)
-        # If there is a code point 0 => Emoji not supported by font:
-        return all(info.codepoint for info in buf.glyph_infos)
+        infos = buf.glyph_infos
+
+        # Remove all variant selectors:
+        while len(infos) > 0 and infos[-1].codepoint == 3:
+            infos = infos[:-1]
+
+        # Filter empty:
+        if len(infos) <= 0:
+            return False
+
+        # Remove uncombined ending with skin tone like "👭🏿":
+        lastCp = infos[-1].codepoint
+        if lastCp == 1076 or lastCp == 1079 or lastCp == 1082 or lastCp == 1085 or lastCp == 1088:
+            return False
+            
+        # If there is a code point 0 => Emoji not fully supported by font:
+        return all(info.codepoint != 0 and info.codepoint != 3 for info in infos)
     
     def testIsEmojiSupportedByFont(self):
-        self.__testEvalIsEmojiSupportedByFont("🐿️", True)
         self.__testEvalIsEmojiSupportedByFont("☹️", True)
         self.__testEvalIsEmojiSupportedByFont("👨‍👨‍👧‍👦", True)
         self.__testEvalIsEmojiSupportedByFont("🐱‍👤", True)
         self.__testEvalIsEmojiSupportedByFont("❤", True)
         self.__testEvalIsEmojiSupportedByFont("🐱‍👤", True)
-        self.__testEvalIsEmojiSupportedByFont("☹️", True)
+        self.__testEvalIsEmojiSupportedByFont("☺️", True)
         self.__testEvalIsEmojiSupportedByFont("🕵🏻‍♀️", True)
+        self.__testEvalIsEmojiSupportedByFont("⛷️", True)
+        self.__testEvalIsEmojiSupportedByFont("👁️‍🗨️", True)
+        self.__testEvalIsEmojiSupportedByFont("🧔🏼", True)
 
+        self.__testEvalIsEmojiSupportedByFont("", False)
         self.__testEvalIsEmojiSupportedByFont("🧏🏻‍♀️", False)
         self.__testEvalIsEmojiSupportedByFont("🧍🏼", False)
         self.__testEvalIsEmojiSupportedByFont("🧍🏿‍♀", False)
         self.__testEvalIsEmojiSupportedByFont("👩🏿‍🦽", False)
+        self.__testEvalIsEmojiSupportedByFont("👩🏽‍🤝‍👨🏿", False)
+        self.__testEvalIsEmojiSupportedByFont("👭🏻", False)
+        self.__testEvalIsEmojiSupportedByFont("👭🏼", False)
+        self.__testEvalIsEmojiSupportedByFont("👭🏽", False)
+        self.__testEvalIsEmojiSupportedByFont("👭🏾", False)
+        self.__testEvalIsEmojiSupportedByFont("👭🏿", False)
 
     def __testEvalIsEmojiSupportedByFont(self, emoji: str, expected: bool):
         print(emoji + " " + str(self.__isEmojiSupportedByFont(Emoji([], emoji, "", [], [], Status.FULLY_QUALIFIED, Group.COMPONENT, "", 0)) == expected))

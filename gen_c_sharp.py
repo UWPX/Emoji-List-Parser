@@ -134,8 +134,21 @@ class GenCSharp:
         # Shape text:
         features = {"kern": True, "liga": True}
         shape(font, buf, features)
-        return len(buf.glyph_positions) == 1
+        # Remove all (0, 0, 0, 0) positions:
+        res = [pos for pos in buf.glyph_positions if not all(p == 0 for p in pos.position)]
+        return len(res) == 1
     
+    def testIsEmojiSupportedByFont(self):
+        self.__testEvalIsEmojiSupportedByFont("☹️", True)
+        self.__testEvalIsEmojiSupportedByFont("👨‍👨‍👧‍👦", True)
+        self.__testEvalIsEmojiSupportedByFont("🐱‍👤", True)
+        self.__testEvalIsEmojiSupportedByFont("❤", True)
+        self.__testEvalIsEmojiSupportedByFont("🐱‍👤", True)
+        self.__testEvalIsEmojiSupportedByFont("☹️", True)
+
+    def __testEvalIsEmojiSupportedByFont(self, emoji: str, expected: bool):
+        print(emoji + " " + str(self.__isEmojiSupportedByFont(Emoji([], emoji, "", [], [], Status.FULLY_QUALIFIED, Group.COMPONENT, "", 0)) == expected))
+
     def __genSingleEmojiStart(self, name: str):
         return ("#if NET20 || NET30 || NET35\n"
             "\t\tpublic static readonly List<SingleEmoji> " + name + " = new List<SingleEmoji>() {\n"

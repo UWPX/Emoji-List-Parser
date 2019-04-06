@@ -7,4 +7,5 @@ if __name__ == "__main__":
     result = parser.parse()
 
     gen = GenCSharp(r"C:\Windows\Fonts\seguiemj.ttf", url)
+    # gen.testIsEmojiSupportedByFont()
     gen.gen(result)

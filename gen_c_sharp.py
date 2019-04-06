@@ -134,17 +134,23 @@ class GenCSharp:
         # Shape text:
         features = {"kern": True, "liga": True}
         shape(font, buf, features)
-        # Remove all (0, 0, 0, 0) positions:
-        res = [pos for pos in buf.glyph_positions if not all(p == 0 for p in pos.position)]
-        return len(res) == 1
+        # If there is a code point 0 => Emoji not supported by font:
+        return all(info.codepoint for info in buf.glyph_infos)
     
     def testIsEmojiSupportedByFont(self):
+        self.__testEvalIsEmojiSupportedByFont("🐿️", True)
         self.__testEvalIsEmojiSupportedByFont("☹️", True)
         self.__testEvalIsEmojiSupportedByFont("👨‍👨‍👧‍👦", True)
         self.__testEvalIsEmojiSupportedByFont("🐱‍👤", True)
         self.__testEvalIsEmojiSupportedByFont("❤", True)
         self.__testEvalIsEmojiSupportedByFont("🐱‍👤", True)
         self.__testEvalIsEmojiSupportedByFont("☹️", True)
+        self.__testEvalIsEmojiSupportedByFont("🕵🏻‍♀️", True)
+
+        self.__testEvalIsEmojiSupportedByFont("🧏🏻‍♀️", False)
+        self.__testEvalIsEmojiSupportedByFont("🧍🏼", False)
+        self.__testEvalIsEmojiSupportedByFont("🧍🏿‍♀", False)
+        self.__testEvalIsEmojiSupportedByFont("👩🏿‍🦽", False)
 
     def __testEvalIsEmojiSupportedByFont(self, emoji: str, expected: bool):
         print(emoji + " " + str(self.__isEmojiSupportedByFont(Emoji([], emoji, "", [], [], Status.FULLY_QUALIFIED, Group.COMPONENT, "", 0)) == expected))

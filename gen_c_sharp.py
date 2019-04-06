@@ -1,28 +1,16 @@
 from emoji_parser import EmojiParseResult, Emoji, Status, SkinTone, Group
-from fontTools.ttLib import TTFont
 import os
 import re
+from uharfbuzz import Face, Font, Buffer, ot_font_set_funcs, shape
+import sys
 
 class GenCSharp:
 
-    def printFont(self):
-        for f in self.font.keys():
-            for table in f:
-                print(table)
-                if isinstance(table, str):
-                    continue
-                for char_code, glyph_name in table.cmap.items():
-                    print(hex(char_code) + " " + glyph_name)
-        """
-        print("------------")
-        print(hex(ord("😉")))
-        print(hex(ord("💖")))
-        print(hex(ord("👨🏿‍🦰")))
-        print(hex(ord("🐱‍👤")))
-        """
-
     def __init__(self, fontPath: str, srcUrl: str):
-        self.font = TTFont(fontPath)
+        # Load font:
+        with open(fontPath, 'rb') as fontfile:
+            self.fontdata = fontfile.read()
+
         self.srcUrl = srcUrl
 
     def __genCamelCaseName(self, emoji: Emoji) -> str:
@@ -131,12 +119,22 @@ class GenCSharp:
         print("Finished generating \"Emoji-" + groupName + ".cs\".")
 
     def __isEmojiSupportedByFont(self, emoji: Emoji) -> bool:
-        code = sum([ord(i) for i in emoji.emoji])
-        for table in self.font['cmap'].tables:
-            for char_code, glyph_name in table.cmap.items():
-                if char_code == code:
-                    return True
-        return False
+        # Load font (has to be done for call):
+        face = Face(self.fontdata)
+        font = Font(face)
+        upem = face.upem
+        font.scale = (upem, upem)
+        ot_font_set_funcs(font)
+
+        # Create text buffer:
+        buf = Buffer()
+        buf.add_str(emoji.emoji)
+        buf.guess_segment_properties()
+
+        # Shape text:
+        features = {"kern": True, "liga": True}
+        shape(font, buf, features)
+        return len(buf.glyph_positions) == 1
     
     def __genSingleEmojiStart(self, name: str):
         return ("#if NET20 || NET30 || NET35\n"

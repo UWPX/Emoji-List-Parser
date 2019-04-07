@@ -21,9 +21,9 @@ class GenCSharp:
 
     def __genSkinTones(self, emoji: Emoji) -> str:
         if len(emoji.skinTones) > 1 or len(emoji.skinTones) == 1 and emoji.skinTones[0] != SkinTone.NONE:
-            return " SkinTones." + ", SkinTones.".join([self.__genSkinToneString(tone) for tone in emoji.skinTones if tone != SkinTone.NONE]) + " "
+            return "new Codepoint[] { SkinTones." + ", SkinTones.".join([self.__genSkinToneString(tone) for tone in emoji.skinTones if tone != SkinTone.NONE]) + " }"
         else:
-            return " "
+            return "SingleEmoji.NoSkinTones"
     
     def __genSkinToneString(self, skinTone: SkinTone) -> str:
         return "".join([s.lower().capitalize() for s in skinTone.name.split("_")])
@@ -44,7 +44,7 @@ class GenCSharp:
             "\t\t\tsequence: new UnicodeSequence(new int[] { " + self.__genCodePoints(emoji) + " }),\n"
             "\t\t\tname: \"" + emoji.name + "\",\n"
             "\t\t\tsearchTerms: new string[] { " + self.__genSearchTerms(emoji) + " },\n"
-            "\t\t\tskinTones: new Codepoint[] {" + self.__genSkinTones(emoji) + "},\n"
+            "\t\t\tskinTones: " + self.__genSkinTones(emoji) + ",\n"
             "\t\t\tgroup: Group." + emoji.group.name + ",\n"
             "\t\t\tsubgroup: Subgroups." + self.__genSubGroupName(emoji.subgroup) + ",\n"
             "\t\t\thasGlyph: " + str(self.__isEmojiSupportedByFont(emoji)).lower() + ",\n"

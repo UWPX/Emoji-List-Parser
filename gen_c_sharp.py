@@ -14,7 +14,10 @@ class GenCSharp:
         self.srcUrl = srcUrl
 
     def __genCamelCaseName(self, emoji: Emoji) -> str:
-        return "".join([s.capitalize() for s in emoji.searchTerms if s.isalnum()])
+        name: str = "".join([s.capitalize() for s in emoji.searchTerms if s.isalnum()])
+        if emoji.eNumber:
+            name += "_" + emoji.eNumber.replace('.', '_')
+        return name
 
     def __genSearchTerms(self, emoji: Emoji) -> str:
         return "\"" + "\", \"".join(emoji.searchTerms) + "\""
@@ -24,6 +27,11 @@ class GenCSharp:
             return "new Codepoint[] { SkinTones." + ", SkinTones.".join([self.__genSkinToneString(tone) for tone in emoji.skinTones if tone != SkinTone.NONE]) + " }"
         else:
             return "SingleEmoji.NoSkinTones"
+    
+    def __genENumber(self, emoji: Emoji) -> float:
+        if emoji.eNumber and 'E' in emoji.eNumber:
+            return emoji.eNumber.replace('E', '')
+        return "1.0"
     
     def __genSkinToneString(self, skinTone: SkinTone) -> str:
         return "".join([s.lower().capitalize() for s in skinTone.name.split("_")])
@@ -45,6 +53,7 @@ class GenCSharp:
             "\t\t\tname: \"" + emoji.name + "\",\n"
             "\t\t\tsearchTerms: new string[] { " + self.__genSearchTerms(emoji) + " },\n"
             "\t\t\tskinTones: " + self.__genSkinTones(emoji) + ",\n"
+            "\t\t\teNumber: " + self.__genENumber(emoji) + ",\n"
             "\t\t\tgroup: Group." + emoji.group.name + ",\n"
             "\t\t\tsubgroup: Subgroups." + self.__genSubGroupName(emoji.subgroup) + ",\n"
             "\t\t\thasGlyph: " + str(self.__isEmojiSupportedByFont(emoji)).lower() + ",\n"
@@ -165,16 +174,16 @@ class GenCSharp:
         self.__testEvalIsEmojiSupportedByFont("🧔🏼", True)
 
         self.__testEvalIsEmojiSupportedByFont("", False)
-        self.__testEvalIsEmojiSupportedByFont("🧏🏻‍♀️", False)
-        self.__testEvalIsEmojiSupportedByFont("🧍🏼", False)
-        self.__testEvalIsEmojiSupportedByFont("🧍🏿‍♀", False)
-        self.__testEvalIsEmojiSupportedByFont("👩🏿‍🦽", False)
-        self.__testEvalIsEmojiSupportedByFont("👩🏽‍🤝‍👨🏿", False)
-        self.__testEvalIsEmojiSupportedByFont("👭🏻", False)
-        self.__testEvalIsEmojiSupportedByFont("👭🏼", False)
-        self.__testEvalIsEmojiSupportedByFont("👭🏽", False)
-        self.__testEvalIsEmojiSupportedByFont("👭🏾", False)
-        self.__testEvalIsEmojiSupportedByFont("👭🏿", False)
+        self.__testEvalIsEmojiSupportedByFont("🧏🏻‍♀️", True)
+        self.__testEvalIsEmojiSupportedByFont("🧍🏼", True)
+        self.__testEvalIsEmojiSupportedByFont("🧍🏿‍♀", True)
+        self.__testEvalIsEmojiSupportedByFont("👩🏿‍🦽", True)
+        self.__testEvalIsEmojiSupportedByFont("👩🏽‍🤝‍👨🏿", True)
+        self.__testEvalIsEmojiSupportedByFont("👭🏻", True)
+        self.__testEvalIsEmojiSupportedByFont("👭🏼", True)
+        self.__testEvalIsEmojiSupportedByFont("👭🏽", True)
+        self.__testEvalIsEmojiSupportedByFont("👭🏾", True)
+        self.__testEvalIsEmojiSupportedByFont("👭🏿", True)
 
     def __testEvalIsEmojiSupportedByFont(self, emoji: str, expected: bool):
         print(emoji + " " + str(self.__isEmojiSupportedByFont(Emoji([], emoji, "", [], [], Status.FULLY_QUALIFIED, Group.COMPONENT, "", 0)) == expected))

@@ -87,6 +87,9 @@ class Emoji:
     status : Status
         the status of the emoji e.g. Status.FULLY_QUALIFIED for "😀" and Status.COMPONENT for "🏻"
 
+    eNumber : str
+        the version number of the emoji (http://unicode.org/reports/tr51/tr51-17.html)
+
     group : Group
         the group the emoji is part of e.g. SMILEYS_AND_EMOTION for "Smileys & Emotion" and PEOPLE_AND_BODY for "People & Body"
 
@@ -97,13 +100,14 @@ class Emoji:
         the index of the emoji in the emoji-test.txt list
     """
 
-    def __init__(self, codePoints: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, group: Group, subgroup: str, index: int):
+    def __init__(self, codePoints: str, emoji: str, name: str, searchTerms: list, skinTones: list, status: Status, eNumber: str, group: Group, subgroup: str, index: int):
         self.codePoints = codePoints
         self.emoji = emoji
         self.name = name
         self.searchTerms = searchTerms
         self.skinTones = skinTones
         self.status = status
+        self.eNumber = eNumber
         self.group = group
         self.subgroup = subgroup
         self.index = index
@@ -194,6 +198,7 @@ class EmojiParser:
             [ "ninja", "cat"],
             [ SkinTone.NONE ],
             Status.FULLY_QUALIFIED,
+            "E0.0", # Dummy
             Group.ANIMALS_AND_NATURE,
             "windows-ninja-cat",
             index
@@ -208,6 +213,7 @@ class EmojiParser:
             [ "hipster", "cat"],
             [ SkinTone.NONE ],
             Status.FULLY_QUALIFIED,
+            "E0.0", # Dummy
             Group.ANIMALS_AND_NATURE,
             "windows-ninja-cat",
             index
@@ -222,6 +228,7 @@ class EmojiParser:
             [ "hacker", "cat"],
             [ SkinTone.NONE ],
             Status.FULLY_QUALIFIED,
+            "E0.0", # Dummy
             Group.ANIMALS_AND_NATURE,
             "windows-ninja-cat",
             index
@@ -236,6 +243,7 @@ class EmojiParser:
             [ "dino", "cat"],
             [ SkinTone.NONE ],
             Status.FULLY_QUALIFIED,
+            "E0.0", # Dummy
             Group.ANIMALS_AND_NATURE,
             "windows-ninja-cat",
             index
@@ -250,6 +258,7 @@ class EmojiParser:
             [ "stunt", "cat"],
             [ SkinTone.NONE ],
             Status.FULLY_QUALIFIED,
+            "E0.0", # Dummy
             Group.ANIMALS_AND_NATURE,
             "windows-ninja-cat",
             index
@@ -264,6 +273,7 @@ class EmojiParser:
             [ "astro", "cat"],
             [ SkinTone.NONE ],
             Status.FULLY_QUALIFIED,
+            "E0.0", # Dummy
             Group.ANIMALS_AND_NATURE,
             "windows-ninja-cat",
             index
@@ -371,6 +381,10 @@ class EmojiParser:
         emoji = parts[0]
         del parts[0]
 
+        # E0.0 number:
+        eNumber = parts[0]
+        del parts[0]
+
         # Name:
         name = " ".join(parts)
 
@@ -414,4 +428,4 @@ class EmojiParser:
         unwanted =  ["of", "with", "without", "and", "or", "&", "-", "on", "the", "in"]
         searchTerms = [l.lower() for l in searchTerms if not (l in unwanted)]
 
-        return Emoji(codePoints, emoji, name, searchTerms, skinTones, status, group, subgroup, index)
+        return Emoji(codePoints, emoji, name, searchTerms, skinTones, status, eNumber, group, subgroup, index)

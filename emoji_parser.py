@@ -71,7 +71,7 @@ class Emoji:
     ----------
     codePoints : str
         a list of one or more code points representing the emoji e.g. [ 0x1F600 ] or [ 0x1F468, 0x1F3FF, 0x200D, 0x2695, 0xFE0F ]
-    
+
     emoji : str
         the actual emoji e.g. "😀" or "👨🏿‍⚕️"
 
@@ -125,12 +125,15 @@ class EmojiParser:
 
     Methods
     -------
-    parse(url: str)
+    parse()
         downloads the emoji file specified in url and returns a EmojiParseResult object or None if the download failed
     """
 
-    def __init__(self, url: str):
+    def __init__(self, url: str=None, filepath: str=None):
+        if not url and not filepath:
+            raise Exception("Either a URL of a filepath to the emoji-test.txt file needs to be provided")
         self.url = url
+        self.filepath = filepath
 
     def parse(self) -> list:
         """
@@ -141,10 +144,13 @@ class EmojiParser:
         list
             a list of Emoji objects if the download was successfull else None
         """
-        text = self.__downloadList()
+        if self.filepath:
+            text = open(self.filepath).read()
+        else:
+            text = self.__downloadList()
         if text is None:
             return None
-        
+
         lines = text.splitlines()
         lines = self.__removeNotImpLines(lines)
 
@@ -282,7 +288,7 @@ class EmojiParser:
 
         return index
 
-    def __downloadList(self) -> str: 
+    def __downloadList(self) -> str:
         print("Started emoji list download from: " + self.url)
         resp = requests.get(self.url)
         print("Finished emoji list download.")
@@ -355,7 +361,7 @@ class EmojiParser:
 
         if endWithSeperator:
             parts[1] = parts[1] + "#"
-        
+
         # Status:
         statusS = parts[0].strip()
         status = Status.COMPONENT

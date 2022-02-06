@@ -186,7 +186,9 @@ class GenCSharp:
         self.__testEvalIsEmojiSupportedByFont("👭🏿", True)
 
     def __testEvalIsEmojiSupportedByFont(self, emoji: str, expected: bool):
-        print(emoji + " " + str(self.__isEmojiSupportedByFont(Emoji([], emoji, "", [], [], Status.FULLY_QUALIFIED, Group.COMPONENT, "", 0)) == expected))
+        emojiObj: Emoji([], emoji, "", [], [], Status.FULLY_QUALIFIED, Group.COMPONENT, "", 0)
+        isSupported: bool = self.__isEmojiSupportedByFont(emojiObj) 
+        print(f"{emoji} : {expected == isSupported}")
 
     def __genSingleEmojiStart(self, name: str):
         return ("#if NET20 || NET30 || NET35\n"

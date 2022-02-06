@@ -5,8 +5,7 @@ A parser for the `emoji-test.txt` file provided by the [Unicode Consortium](http
 ## Requirements
 
 * [Python](https://www.python.org/download/releases/3.0/) >= 3.0
-* [Requests](http://docs.python-requests.org/en/master/) (`pip3 install requests`)
-* [Fonttools](https://pypi.org/project/fonttools/) (`pip3 install fonttools`)
+* `pip3 install --user -r requirements.txt`
 
 ## Example
 
